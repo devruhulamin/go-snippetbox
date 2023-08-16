@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"github.com/devruhulamin/go-snippetbox/internal/models"
 )
@@ -15,24 +14,31 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w)
 		return
 	}
-	files := []string{
-		"./ui/html/pages/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/home.tmpl",
-	}
-	ts, err := template.ParseFiles(files...)
+	// files := []string{
+	// 	"./ui/html/pages/base.tmpl",
+	// 	"./ui/html/partials/nav.tmpl",
+	// 	"./ui/html/pages/home.tmpl",
+	// }
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	// app.errorlog.Print(err.Error())
+	// 	app.serverError(w, err)
+	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// 	return
+	// }
+	// err = ts.ExecuteTemplate(w, "base", nil)
+	// if err != nil {
+	// 	// app.errorlog.Print(err.Error())
+	// 	app.serverError(w, err)
+	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// 	return
+	// }
+	snippets, err := app.snippets.Latest()
 	if err != nil {
-		// app.errorlog.Print(err.Error())
-		app.serverError(w, err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		// app.errorlog.Print(err.Error())
-		app.serverError(w, err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v", snippet)
 	}
 }
 
