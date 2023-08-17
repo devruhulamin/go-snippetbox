@@ -7,45 +7,26 @@ import (
 	"strconv"
 
 	"github.com/devruhulamin/go-snippetbox/internal/models"
+	"github.com/julienschmidt/httprouter"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		app.notFound(w)
-		return
-	}
-	// files := []string{
-	// 	"./ui/html/pages/base.tmpl",
-	// 	"./ui/html/partials/nav.tmpl",
-	// 	"./ui/html/pages/home.tmpl",
-	// }
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	// app.errorlog.Print(err.Error())
-	// 	app.serverError(w, err)
-	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	// 	return
-	// }
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// 	// app.errorlog.Print(err.Error())
-	// 	app.serverError(w, err)
-	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	// 	return
-	// }
 	snippets, err := app.snippets.Latest()
 	if err != nil {
 		return
 	}
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v", snippet)
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
+
+	app.render(w, http.StatusOK, "home.tmpl", data)
+
 }
 
 // Add a snippetView handler function.
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
 
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
 		// http.NotFound(w, r)
 		app.notFound(w)
@@ -59,13 +40,15 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 		}
 	}
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
+	app.render(w, http.StatusOK, "view.tmpl", data)
 
-	fmt.Fprintf(w, "%+v", snippet)
 }
 
 // Add a snippetCreate handler function.
 
-func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
+func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 
 		w.Header().Set("Allow", http.MethodPost)
@@ -80,5 +63,8 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+}
+func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Display the form for creating a new snippet..."))
 }
